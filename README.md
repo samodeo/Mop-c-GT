@@ -11,8 +11,8 @@
  
  Applications to:
  - generalized NFW parametric models
- - polytropic gas model based on Ostriker, Bode, Balbus (2005).
- 
- Presented in Amodeo et al. in prep. 
+ - polytropic gas model based on Ostriker, Bode, Balbus (2005). 
 
 Only requires numpy and scipy.
+
+Presented in Amodeo et al. in prep.
