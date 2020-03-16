@@ -14,3 +14,5 @@
  - polytropic gas model based on Ostriker, Bode, Balbus (2005).
  
  Presented in Amodeo et al. in prep. 
+
+Only requires numpy and scipy.
