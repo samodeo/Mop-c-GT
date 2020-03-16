@@ -11,6 +11,6 @@
  
  Applications to:
  - generalized NFW parametric models
- - polytropic gas model based on Ostriker, Bode, Balbus (2005)
+ - polytropic gas model based on Ostriker, Bode, Balbus (2005).
  
  Presented in Amodeo et al. in prep. 
