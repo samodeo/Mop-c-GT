@@ -1,5 +1,5 @@
 # Mop-c GT
- Model-to-observable projection code for galaxy thermodynamics
+## Model-to-observable projection code for galaxy thermodynamics
 
  Authors: Stefania Amodeo, Nicholas Battaglia
  
