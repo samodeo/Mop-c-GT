@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import Mop-c-GT as mop
+import mopc as mop
 
 '''set halo redshift and mass [Msun]
 '''
