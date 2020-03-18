@@ -1,27 +1,28 @@
-from headers import *
+import numpy as np
+from .params import cosmo_params
+from .cosmo import rho_cz
 
-def r200(M, z_input=None):
-    '''radius of a sphere with density 200 times the critical density of the universe,
-    input mass in cgs 
+Msol_cgs = 1.989e33
+rhocrit =  1.87847e-29 * cosmo_params['hh']**2
+G_cgs = 6.67259e-8 #cm3/g/s2
+fb = cosmo_params['Omega_b']/cosmo_params['Omega_m']
+
+def r200(M, z):
+    '''radius of a sphere with density 200 times the critical density of the universe.
+    Input mass in solar masses. Output radius in cm.
     '''
-    if z_input is not None:
-        z = z_input
-    else:
-        z = Params['z']
-    om = Params['Omega_m']
-    ol = Params['Omega_L']
+    M_cgs = M*Msol_cgs
+    om = cosmo_params['Omega_m']
+    ol = cosmo_params['Omega_L']
     Ez2 = om * (1 + z)**3 + ol
-    ans = (3 * M / (4 * np.pi * 200.*rhocrit*Ez2))**(1.0/3.0)
+    ans = (3 * M_cgs / (4 * np.pi * 200.*rhocrit*Ez2))**(1.0/3.0)
     return ans
 
 
-def rho_gnfw1h(xx, theta):
+def rho_gnfw1h(xx, M, z, theta):
     '''generalized NFW profile describing the gas density [g/cm3],
     parameters have mass and redshift dependence, as in Battaglia 2016
     '''
-    M = Params['M']
-    z = Params['z']
-    fb = Params['Omega_b']/Params['Omega_m']
     #rho0 = 4e3 * (M/1e14)**0.29 * (1+z)**(-0.66)
     #xc = 0.5
     al = 0.88 * (M/1e14)**(-0.03) * (1+z)**0.19
@@ -43,19 +44,16 @@ def rho_gnfw2h(xx, a2):
 def rho_gnfw(xx, theta):
     theta1h = theta[0], theta[1], theta[2]
     theta2h = theta[3]
-    ans = rho_gnfw1h(xx, theta1h) + rho_gnfw2h(xx, theta2h)
+    ans = rho_gnfw1h(xx,M,z,theta1h) + rho_gnfw2h(xx, theta2h)
     return ans
 
 
-def Pth_gnfw1h(x,theta, Mcgs):
+def Pth_gnfw1h(x,M,z,theta):
     '''generalized NFW profile describing the thermal pressure [cgs units],
     parameters have mass and redshift dependence, as in Battaglia et al. (2012)
     '''
-    G_cgs = 6.67259e-8 #cm3/g/s2
-    z = Params['z']
-    fb = Params['Omega_b']/Params['Omega_m']
-    M = M_cgs / Msol_cgs
-    r200c = r200(M_cgs,z)
+    r200c = r200(M,z)
+    M_cgs = M*Msol_cgs
     P200c = G_cgs * M_cgs* 200. * rho_cz(z) * fb /(2.*r200c)
     #P0, xc, bt = theta
     P0, al, bt = theta
@@ -76,5 +74,5 @@ def Pth_gnfw2h(xx):
     return ans
 
 def Pth_gnfw(xx, theta):
-    ans = Pth_gnfw1h(xx, theta, M) + Pth_gnfw2h(xx)
+    ans = Pth_gnfw1h(xx,M,z,theta) + Pth_gnfw2h(xx)
     return ans
