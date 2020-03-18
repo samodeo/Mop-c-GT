@@ -3,13 +3,13 @@ import os
 
 
 
-setup(name='Mop-cGT',
+setup(name='Mop-c-GT',
       version='0.1',
       description='Model-to-observable projection code for galaxy thermodynamics',
       url='https://github.com/samodeo/Mop-c-GT',
       author='Stefania Amodeo',
       author_email='sa649@cornell.edu',
       license='BSD-2-Clause',
-      packages=['Mop-cGT'],
-      package_dir={'hmvec':'Mop-cGT'},
+      packages=['Mop-c-GT'],
+      package_dir={'Mop-c-GT':'Mop-c-GT'},
       zip_safe=False)
