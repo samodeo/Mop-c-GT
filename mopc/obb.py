@@ -1,4 +1,15 @@
-from headers import *
+import numpy as np
+from scipy.special import spence
+from scipy.optimize import fmin
+from scipy.optimize import newton
+from .params import cosmo_params
+
+delx = 0.01
+Msol_cgs = 1.989e33
+Gravity = 6.67259e-8
+rhocrit =  1.87847e-29 * Params['hh']**2
+fb = cosmo_params['Omega_b']/cosmo_params['Omega_m']
+
 
 def nfw(x):
     '''shape of a NFW profile (NFW 1997, ApJ,490, 493)
@@ -29,7 +40,7 @@ def del_s(c):
     ans = Sc(c) / (Sc(c) + (1./c**3)*Hc(c)*gx(c))
     return ans
 
-def K_c(c): #without GMAX
+def K_c(c): 
     ans = 1./3.* Hc(c)/(1.-del_s(c))
     return ans
 
@@ -44,39 +55,32 @@ def sig_dm2(x,c):
     return ans
 
 
-def r200(M, z_input=None):
-    '''radius of a sphere with density 200 times the critical density of the universe,
-    input mass in cgs 
+def r200(M, z):
+    '''radius of a sphere with density 200 times the critical density of the universe.
+    Input mass in solar masses. Output radius in cm.
     '''
-    if z_input is not None:
-        z = z_input
-    else:
-        z = Params['z']
-    om = Params['Omega_m']
-    ol = Params['Omega_L']
+    M_cgs = M*Msol_cgs
+    om = cosmo_params['Omega_m']
+    ol = cosmo_params['Omega_L']
     Ez2 = om * (1 + z)**3 + ol
-    ans = (3 * M / (4 * np.pi * 200.*rhocrit*Ez2))**(1.0/3.0)
+    ans = (3 * M_cgs / (4 * np.pi * 200.*rhocrit*Ez2))**(1.0/3.0)
     return ans
 
-def con(Mvir, z_input=None):
+def con(M, z):
     '''
     concentration parameter from Duffy et al. (2008)
-    input mass in cgs
+    input mass in solar masses
     '''
-    M = Mvir / Msol_cgs
-    if z_input is not None:
-        z = z_input
-    else:
-        z = Params['z']
     ans = 5.71 / (1 + z)**(0.47) * (M / 2e12)**(-0.084)
     return ans
 
-def rho_dm(x,Mvir):
+def rho_dm(x,M,z):
     '''NFW profile describing the dark matter density [g/cm3]
     '''
-    c = con(Mvir)
-    rvir = r200(Mvir)
-    ans = Mvir*(c/rvir)**3 / (4.*np.pi*gx(c)) * nfw(x)
+    c = con(M,z)
+    rvir = r200(M,z)
+    M_cgs = M*Msol_cgs
+    ans = M_cgs*(c/rvir)**3 / (4.*np.pi*gx(c)) * nfw(x)
     return ans
 
 def jx(x,c):
@@ -100,25 +104,25 @@ def fx (x,c):
         ans = (np.log(1. + c)/c - 1./(1. + c))*c/x
     return ans
 
-def fstar_func(Mvir):
+def fstar_func(M):
     '''Giodini 2009, modified by 0.5
     '''
-    ans = 2.5e-2 * (Mvir / (7e13*Msol_cgs))**(-0.37) 
+    ans = 2.5e-2 * (M / (7e13))**(-0.37) 
     return ans
 
-def xs_min_func(x,Mvir):
-    c = con(Mvir)
-    fstar = fstar_func(Mvir)
+def xs_min_func(x,M,z):
+    c = con(M,z)
+    fstar = fstar_func(M)
     ans = gx(c)*fstar/(1. + fstar) - gx(x)
     return ans
 
-def xs_func(Mvir):
+def xs_func(M,z):
     x0 = 1.0
-    xs = newton(xs_min_func, x0, args=(Mvir,))
+    xs = newton(xs_min_func, x0, args=(M,z,))
     return xs
 
-def Ks(x_s,Mvir):
-    c = con(Mvir)
+def Ks(x_s,M,z):
+    c = con(M,z)
     xx = np.arange(delx/2.,x_s,delx)
     ans = 1./gx(c)*(np.sum(Sc(xx)*xx**2) - 2./3.*np.sum(fx(xx,c)*xx/(1. + xx)**2) )*delx
     return ans
@@ -129,192 +133,198 @@ def n_exp(gamma):
     ans = 1. / (gamma - 1)
     return ans
 
-def theta_func(x,Mvir,theta,theta2):
+def theta_func(x,M,z,theta,theta2):
     '''polytropic variable
     '''
     gamma,alpha,Ef = theta
     beta, x_f = theta2
-    c = con(Mvir)
-    rvir = r200(Mvir)
+    c = con(M,z)
     nn = n_exp(gamma)
     #print(jx(x,c).shape)
     ans = (1. - beta*jx(x,c)/(1. + nn))
     return ans
 
-def theta_func_f(x,Mvir,theta,theta2):
+def theta_func_f(x,M,z,theta,theta2):
     gamma,alpha,Ef = theta
     beta, x_f = theta2
-    c = con(Mvir)
-    rvir = r200(Mvir)
+    c = con(M,z)
     nn = n_exp(gamma)
     ans = (1. - beta*jx_f(x,c)/(1. + nn))
     return ans
 
-def rho_use(x,Mvir,theta, theta2):
+def rho_use(x,M,z,theta, theta2):
     gamma,alpha,Ef = theta
     beta, x_f = theta2
     nn = n_exp(gamma)
-    ans = (theta_func(x,Mvir,theta,theta2))**nn
+    ans = (theta_func(x,M,z,theta,theta2))**nn
     return ans
 
-def rho(x,Mvir,theta, theta2):
+def rho(x,M,z,theta, theta2):
     gamma,alpha,Ef = theta
     P_0, rho_0, x_f = theta2
     nn = n_exp(gamma)
-    c = con(Mvir)
-    rvir = r200(Mvir)
-    beta = rho_0/P_0 * Gravity*Mvir/rvir*c/gx(c)
+    c = con(M,z)
+    rvir = r200(M,z)
+    M_cgs = M*Msol_cgs
+    beta = rho_0/P_0 * Gravity*M_cgs/rvir*c/gx(c)
     theta2_use = beta, x_f
     #print(theta_func(x,Mvir,theta,theta2_use))
-    ans = rho_0*(theta_func(x,Mvir,theta,theta2_use))**nn
+    ans = rho_0*(theta_func(x,M,z,theta,theta2_use))**nn
     return ans
 
 
-def rho_outtest(x,Mvir,theta, theta2):
+def rho_outtest(x,M,z,theta, theta2):
     gamma,alpha,Ef = theta
     P_0, rho_0, x_f = theta2
     nn = n_exp(gamma)
-    c = con(Mvir)
-    rvir = r200(Mvir)
-    beta = rho_0/P_0 * Gravity*Mvir/rvir*c/gx(c)
+    c = con(M,z)
+    rvir = r200(M,z)
+    M_cgs = M*Msol_cgs
+    beta = rho_0/P_0 * Gravity*M_cgs/rvir*c/gx(c)
     theta2_use = beta, x_f
     #print("inside rhoout", theta2_use)
-    ans = rho_0*(theta_func(x,Mvir,theta,theta2_use))**nn
+    ans = rho_0*(theta_func(x,M,z,theta,theta2_use))**nn
     return ans
 
-def Pnth_th(x,Mvir,theta):
+def Pnth_th(x,M,z,theta):
     gamma,alpha,Ef = theta
-    c = con(Mvir)
+    c = con(M,z)
     ans = 1. - alpha*(x/c)**0.8
     return ans
 
-def Pth(x,Mvir,theta,theta2):
+def Pth(x,M,z,theta,theta2):
     gamma,alpha,Ef = theta
     P_0, rho_0, x_f = theta2
-    c = con(Mvir)
-    rvir = r200(Mvir)
+    c = con(M,z)
+    rvir = r200(M,z)
     nn = n_exp(gamma)
-    beta = rho_0/P_0 * Gravity*Mvir/rvir*c/gx(c)
+    M_cgs = M*Msol_cgs
+    beta = rho_0/P_0 * Gravity*M_cgs/rvir*c/gx(c)
     theta2_use = beta, x_f
-    ans = P_0*(theta_func(x,Mvir,theta,theta2_use))**(nn+1.) * Pnth_th(x,Mvir,theta)
+    ans = P_0*(theta_func(x,M,z,theta,theta2_use))**(nn+1.) * Pnth_th(x,M,z,theta)
     return ans
 
-def Pth_use(x,Mvir,theta,theta2):
+def Pth_use(x,M,z,theta,theta2):
     gamma,alpha,Ef = theta
     beta, x_f = theta2
     nn = n_exp(gamma)
-    ans = (theta_func(x,Mvir,theta,theta2))**(nn+1.) * Pnth_th(x,Mvir,theta)
+    ans = (theta_func(x,M,z,theta,theta2))**(nn+1.) * Pnth_th(x,M,z,theta)
     return ans
 
-def Ptot(Mvir,theta,theta2):
+def Ptot(M,z,theta,theta2):
     gamma,alpha,Ef = theta
     P_0, rho_0, x_f = theta2
     nn = n_exp(gamma)
-    rvir = r200(Mvir)
-    c = con(Mvir)
-    beta = rho_0/P_0 * Gravity*Mvir/rvir*c/gx(c)
+    rvir = r200(M,z)
+    c = con(M,z)
+    M_cgs = M*Msol_cgs
+    beta = rho_0/P_0 * Gravity*M_cgs/rvir*c/gx(c)
     theta2_use = beta, x_f
-    ans = P_0*(theta_func_f(x_f,Mvir,theta,theta2_use))**(nn+1.)
+    ans = P_0*(theta_func_f(x_f,M,z,theta,theta2_use))**(nn+1.)
     return ans
 
-def Ptot_use(Mvir,theta,theta2):
+def Ptot_use(M,z,theta,theta2):
     gamma,alpha,Ef = theta
     beta, x_f = theta2
     nn = n_exp(gamma)
-    ans = (theta_func_f(x_f,Mvir,theta,theta2))**(nn+1.)
+    ans = (theta_func_f(x_f,M,z,theta,theta2))**(nn+1.)
     return ans
 
-def Pnth(x,Mvir,theta,theta2):
+def Pnth(x,M,z,theta,theta2):
     gamma,alpha,Ef = theta
     P_0, rho_0, x_f = theta2
-    c = con(Mvir)
+    c = con(M,z)
     nn = n_exp(gamma)
-    rvir = r200(Mvir)
+    rvir = r200(M,z)
+    M_cgs = M*Msol_cgs
     beta = rho_0/P_0 * Gravity*Mvir/rvir*c/gx(c)
     theta2_use = beta, x_f
-    ans = alpha*(x/c)**0.8 * P_0*(theta_func(x,Mvir,theta,theta2_use))**(nn+1.)
+    ans = alpha*(x/c)**0.8 * P_0*(theta_func(x,M,z,theta,theta2_use))**(nn+1.)
     return ans
 
-def Pnth_use(x,Mvir,theta,theta2):
+def Pnth_use(x,M,theta,theta2):
     gamma,alpha,Ef = theta
-    c = con(Mvir)
+    c = con(M,z)
     nn = n_exp(gamma)
-    ans = alpha*(x/c)**0.8 * (theta_func(x,Mvir,theta,theta2))**(nn+1.)
+    ans = alpha*(x/c)**0.8 * (theta_func(x,M,z,theta,theta2))**(nn+1.)
     return ans
 
-def I2_int(Mvir,theta,theta2):
-    gamma,alpha,Ef = theta
-    beta, x_f = theta2
-    nn = n_exp(gamma)
-    c = con(Mvir)
-    xx = np.arange(delx/2.,x_f,delx)
-    ans = np.sum(fx(xx,c)*rho_use(xx,Mvir,theta,theta2)*xx**2)*delx
-    return ans
-
-def I3_int(Mvir,theta,theta2):
+def I2_int(M,z,theta,theta2):
     gamma,alpha,Ef = theta
     beta, x_f = theta2
     nn = n_exp(gamma)
+    c = con(M,z)
     xx = np.arange(delx/2.,x_f,delx)
-    ans = np.sum(Pth_use(xx,Mvir,theta,theta2) *xx**2)*delx
+    ans = np.sum(fx(xx,c)*rho_use(xx,M,z,theta,theta2)*xx**2)*delx
     return ans
 
-def I4_int(Mvir,theta,theta2):
+def I3_int(M,z,theta,theta2):
     gamma,alpha,Ef = theta
     beta, x_f = theta2
     nn = n_exp(gamma)
     xx = np.arange(delx/2.,x_f,delx)
-    ans = np.sum(Pnth_use(xx,Mvir,theta,theta2)*xx**2)*delx
+    ans = np.sum(Pth_use(xx,M,z,theta,theta2) *xx**2)*delx
     return ans
 
-def L_int(Mvir,theta,theta2):
+def I4_int(M,z,theta,theta2):
     gamma,alpha,Ef = theta
     beta, x_f = theta2
     nn = n_exp(gamma)
     xx = np.arange(delx/2.,x_f,delx)
-    ans = np.sum(rho_use(xx,Mvir,theta,theta2)*xx**2)*delx
+    ans = np.sum(Pnth_use(xx,M,z,theta,theta2)*xx**2)*delx
+    return ans
+
+def L_int(M,z,theta,theta2):
+    gamma,alpha,Ef = theta
+    beta, x_f = theta2
+    nn = n_exp(gamma)
+    xx = np.arange(delx/2.,x_f,delx)
+    ans = np.sum(rho_use(xx,M,z,theta,theta2)*xx**2)*delx
     return ans
 
 def rho_0_func(theta0,theta2):
-    Mvir,gamma,alpha,Ef = theta0
+    M,z,gamma,alpha,Ef = theta0
     theta = [gamma,alpha,Ef]
-    c = con(Mvir)
-    rvir = r200(Mvir)
-    fstar = fstar_func(Mvir)
-    ans = Mvir*(fb-fstar) / (4.*np.pi * L_int(Mvir,theta,theta2)*(rvir/c)**3)
+    c = con(M,z)
+    rvir = r200(M,z)
+    fstar = fstar_func(M)
+    M_cgs = M*Msol_cgs
+    ans = M_cgs*(fb-fstar) / (4.*np.pi * L_int(M,z,theta,theta2)*(rvir/c)**3)
     return ans
 
 def P_0_func(theta0,theta2,rho_0):
-    Mvir,gamma,alpha,Ef = theta0
+    M,z,gamma,alpha,Ef = theta0
     beta, x_f = theta2
-    c = con(Mvir)
-    rvir = r200(Mvir)
-    ans = rho_0/beta * Gravity*Mvir/rvir*c/gx(c)
+    c = con(M,z)
+    rvir = r200(M,z)
+    M_cgs = M*Msol_cgs
+    ans = rho_0/beta * Gravity*M_cgs/rvir*c/gx(c)
     return ans
 
 def findroots2(theta2,theta0):
-    Mvir,gamma,alpha,Ef = theta0
+    M,z,gamma,alpha,Ef = theta0
     theta = [gamma,alpha,Ef]
     beta, x_f = theta2
-    c = con(Mvir)
-    rvir = r200(Mvir)
-    x_s = xs_func(Mvir)
-    fstar = fstar_func(Mvir)
+    c = con(M,z)
+    rvir = r200(M,z)
+    x_s = xs_func(M,z)
+    fstar = fstar_func(M)
+    M_cgs = M*Msol_cgs
 
-    E_inj = Ef * gx(c) * rvir * fstar / (Gravity*Mvir*c) * C_CGS**2
+    E_inj = Ef * gx(c) * rvir * fstar / (Gravity*M_cgs*c) * C_CGS**2
 
-    Eq1 = (3./2.*(1. + fstar) * (K_c(c)*(3.-4.*del_s(c)) + Ks(x_s,Mvir))  - E_inj + 1./3.* (1.+fstar) *Sc(c) / gx(c) * (x_f**3 - c**3)
-           - I2_int(Mvir,theta,theta2)/L_int(Mvir,theta,theta2)
-           + 3./2. * I3_int(Mvir,theta,theta2)/(beta*L_int(Mvir,theta,theta2))
-           + 3.* I4_int(Mvir,theta,theta2)/(beta*L_int(Mvir,theta,theta2)))
+    Eq1 = (3./2.*(1. + fstar) * (K_c(c)*(3.-4.*del_s(c)) + Ks(x_s,M,z))  - E_inj + 1./3.* (1.+fstar) *Sc(c) / gx(c) * (x_f**3 - c**3)
+           - I2_int(M,z,theta,theta2)/L_int(M,z,theta,theta2)
+           + 3./2. * I3_int(M,z,theta,theta2)/(beta*L_int(M,z,theta,theta2))
+           + 3.* I4_int(M,z,theta,theta2)/(beta*L_int(M,z,theta,theta2)))
 
-    Eq2 = (1.+fstar)*Sc(c) / gx(c) * (beta*L_int(Mvir,theta,theta2)) - Ptot_use(Mvir,theta,theta2)
+    Eq2 = (1.+fstar)*Sc(c) / gx(c) * (beta*L_int(M,z,theta,theta2)) - Ptot_use(M,z,theta,theta2)
 
     ans = Eq1**2 + Eq2**2
     return ans
 
 def return_prof_pars(theta2,theta0):
-    Mvir,gamma,alpha,Ef = theta0
+    M,z,gamma,alpha,Ef = theta0
     beta, x_f = theta2
     ans = fmin(findroots2, theta2, args=(theta0,),disp=False)
     beta_ans, x_f_ans = ans
@@ -323,16 +333,18 @@ def return_prof_pars(theta2,theta0):
     return P_0, rho_0, x_f_ans
 
 def findroots(theta2,theta0):
-    Mvir,gamma,alpha,Ef = theta0
+    M,z,gamma,alpha,Ef = theta0
     theta = [gamma,alpha,Ef]
     beta, x_f = theta2
-    c = con(Mvir)
-    rvir = r200(Mvir)
-    E_inj = Ef * gx(c) * rvir / (Gravity*Mvir*c) * C_CGS**2
+    c = con(M,z)
+    rvir = r200(M,z)
+    M_cgs = M*Msol_cgs
+
+    E_inj = Ef * gx(c) * rvir / (Gravity*M_cgs*c) * C_CGS**2
 
     Eq1 = (3./2. * (K_c(c)*(3.-4.*del_s(c))) - E_inj + 1./3.* Sc(c) / gx(c) * (x_f**3 - c**3)
-           - I2_int(Mvir,theta,theta2)/L_int(Mvir,theta,theta2)
-           + 3./2. * I3_int(Mvir,theta,theta2)/(beta*L_int(Mvir,theta,theta2))
-           + 3.* I4_int(Mvir,theta,theta2)/(beta*L_int(Mvir,theta,theta2)))
-    Eq2 = Sc(c) / gx(c) * (beta*L_int(Mvir,theta,theta2)) - Ptot_use(Mvir,theta,theta2)
+           - I2_int(M,z,theta,theta2)/L_int(M,z,theta,theta2)
+           + 3./2. * I3_int(M,z,theta,theta2)/(beta*L_int(M,z,theta,theta2))
+           + 3.* I4_int(M,z,theta,theta2)/(beta*L_int(M,z,theta,theta2)))
+    Eq2 = Sc(c) / gx(c) * (beta*L_int(M,z,theta,theta2)) - Ptot_use(M,z,theta,theta2)
     return (Eq1,Eq2)
