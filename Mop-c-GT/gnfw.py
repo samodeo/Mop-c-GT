@@ -34,7 +34,7 @@ def rho_gnfw1h(xx, theta):
     return ans
 
 def rho_gnfw2h(xx, a2):
-    rho = np.genfromtxt('rhoGNFW_M2e+13_z0.57.txt')
+    rho = np.genfromtxt('data/rhoGNFW_M2e+13_z0.57.txt')
     rat = rho[:,1]
     rho2h = rho[:,3]
     ans = a2 * np.interp(xx,rat,rho2h)
@@ -69,7 +69,7 @@ def Pth_gnfw1h(x,theta, Mcgs):
     return ans
 
 def Pth_gnfw2h(xx):
-    pth = np.genfromtxt('PthGNFW_M2e+13_z0.57.txt')
+    pth = np.genfromtxt('data/PthGNFW_M2e+13_z0.57.txt')
     rat = pth[:,1]
     pth2h = pth[:,3]
     ans = np.interp(xx,rat,pth2h)
