@@ -1,10 +1,15 @@
-from headers import *
+import numpy as np
+from scipy.integrate import quad
+from .params import cosmo_params
+
+rhocrit =  1.87847e-29 * Params['hh']**2
+
 
 def hub_func(z):
     '''Hubble function
     '''
-    Om = Params['Omega_m']
-    Ol = Params['Omega_L']
+    Om = cosmo_params['Omega_m']
+    Ol = cosmo_params['Omega_L']
     O_tot = Om + Ol
     ans = np.sqrt(Om*(1.0 + z)**3 + Ol + (1 - O_tot)*(1 + z)**2)
     return ans
@@ -12,7 +17,7 @@ def hub_func(z):
 def rho_cz(z):
     '''critical density in cgs
     '''
-    Ez2 = Params['Omega_m']*(1+z)**3. + (1-Params['Omega_m'])
+    Ez2 = cosmo_params['Omega_m']*(1+z)**3. + (1-cosmo_params['Omega_m'])
     return rhocrit * Ez2
 
 
@@ -26,10 +31,10 @@ def ComInt(z):
 def ComDist(z):
     '''comoving distance
     '''
-    Om = Params['Omega_m']
-    Ol = Params['Omega_L']
+    Om = cosmo_params['Omega_m']
+    Ol = cosmo_params['Omega_L']
     O_tot = Om + Ol
-    Dh = Params['C_OVER_HUBBLE']/Params['hh']
+    Dh = cosmo_params['C_OVER_HUBBLE']/cosmo_params['hh']
     ans = Dh*quad(ComInt,0,z)[0]
     if (O_tot < 1.0): ans = Dh / np.sqrt(1.0-O_tot) *  np.sin(np.sqrt(1.0-O_tot) * quad(ComInt,0,z)[0])
     if (O_tot > 1.0): ans = Dh / np.sqrt(O_tot-1.0) *  np.sinh(np.sqrt(O_tot-1.0) * quad(ComInt,0,z)[0])
