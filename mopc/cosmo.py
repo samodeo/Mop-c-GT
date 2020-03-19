@@ -2,7 +2,7 @@ import numpy as np
 from scipy.integrate import quad
 from .params import cosmo_params
 
-rhocrit =  1.87847e-29 * Params['hh']**2
+rhocrit =  1.87847e-29 * cosmo_params['hh']**2
 
 
 def hub_func(z):
