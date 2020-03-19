@@ -7,7 +7,9 @@ from .params import cosmo_params
 delx = 0.01
 Msol_cgs = 1.989e33
 Gravity = 6.67259e-8
-rhocrit =  1.87847e-29 * Params['hh']**2
+rhocrit =  1.87847e-29 * cosmo_params['hh']**2
+C_CGS = 2.99792e+10
+
 fb = cosmo_params['Omega_b']/cosmo_params['Omega_m']
 
 
@@ -242,7 +244,7 @@ def Pnth(x,M,z,theta,theta2):
     ans = alpha*(x/c)**0.8 * P_0*(theta_func(x,M,z,theta,theta2_use))**(nn+1.)
     return ans
 
-def Pnth_use(x,M,theta,theta2):
+def Pnth_use(x,M,z,theta,theta2):
     gamma,alpha,Ef = theta
     c = con(M,z)
     nn = n_exp(gamma)
