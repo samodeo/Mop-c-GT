@@ -3,7 +3,7 @@ from scipy import special
 from .params import cosmo_params
 from .cosmo import AngDist
 from .gnfw import r200, rho_gnfw1h, Pth_gnfw1h
-from .obb import con, fstar_func, return_prof_pars
+from .obb import con, fstar_func, return_prof_pars, rho, Pth
 
 
 '''
@@ -15,9 +15,11 @@ The GNFW model of Pth is obtained through 'make_a_obs_profile_sim_pth()'.
 '''
 
 fb = cosmo_params['Omega_b']/cosmo_params['Omega_m']
+kBoltzmann = 1.380658e-23 # m2 kg /(s2 K)
+hPlanck = 6.6260755e-34 #m2 kg/s
 Gmax = 0.216216538797
 Gravity = 6.67259e-8
-rhocrit =  1.87847e-29 * Params['hh']**2
+rhocrit =  1.87847e-29 * cosmo_params['hh']**2
 Msol_cgs = 1.989e33
 kpc_cgs = 3.086e21
 kev_erg = 1.60218e-9
@@ -32,7 +34,18 @@ delx = 0.01
 v_rms = 7.e-4 #1e-3 #v_rms/c
 
 
-def project_prof_beam(tht,M,z,theta,theta2):
+def coth(x):
+    return 1/np.tanh(x)
+
+def fnu(nu):
+    '''input frequency in GHz'''
+    nu *= 1e9 
+    x = hPlanck * nu / (kBoltzmann * TCMB)
+    ans = x * coth(x/2.)-4.
+    return ans
+
+
+def project_prof_beam(tht,M,z,theta,theta2, nu):
 
     disc_fac = np.sqrt(2)
     l0 = 30000.
@@ -120,7 +133,7 @@ def project_prof_beam(tht,M,z,theta,theta2):
     sig_p  = 2.0*np.pi*dtht*np.sum(thta*Pth2D_beam)
     sig2_p = 2.0*np.pi*dtht2*np.sum(thta2*Pth2D2_beam)
 
-    sig_all_p_beam = (2*sig_p - sig2_p) * ST_CGS/(ME_CGS*C_CGS**2) * TCMB * 1e6 * ((2. + 2.*XH)/(3.+5.*XH))#/ area_fac # muK
+    sig_all_p_beam = fnu(nu) * (2*sig_p - sig2_p) * ST_CGS/(ME_CGS*C_CGS**2) * TCMB * 1e6 * ((2. + 2.*XH)/(3.+5.*XH))#/ area_fac # muK
 
     return sig_all_beam, sig_all_p_beam
 
@@ -201,7 +214,7 @@ def project_prof_beam_sim_rho(tht,M,z,theta_rho):
 
     return sig_all_beam
 
-def project_prof_beam_sim_pth(tht,M,z,theta_pth):
+def project_prof_beam_sim_pth(tht,M,z,theta_pth, nu):
     theta_sim_pth = theta_pth
 
     disc_fac = np.sqrt(2)
@@ -215,7 +228,6 @@ def project_prof_beam_sim_pth(tht,M,z,theta_pth):
 
     drint = 1e-3 * (kpc_cgs * 1e3)
     XH = 0.76
-    z = Params['z']
 
     AngDis = AngDist(z)
 
@@ -274,13 +286,13 @@ def project_prof_beam_sim_pth(tht,M,z,theta_pth):
     sig_p  = 2.0*np.pi*dtht*np.sum(thta*Pth2D_beam)
     sig2_p = 2.0*np.pi*dtht2*np.sum(thta2*Pth2D2_beam)
 
-    sig_all_p_beam = (2*sig_p - sig2_p) * ST_CGS/(ME_CGS*C_CGS**2) * TCMB * 1e6 * ((2. + 2.*XH)/(3.+5.*XH)) #/ area_fac # muK
+    sig_all_p_beam = fnu(nu) * (2*sig_p - sig2_p) * ST_CGS/(ME_CGS*C_CGS**2) * TCMB * 1e6 * ((2. + 2.*XH)/(3.+5.*XH)) #/ area_fac # muK
 
     return sig_all_p_beam
 
 
 def find_params_M(M,z,theta_0):
-    theta0 = np.append(M,z,theta_0)
+    theta0 = np.append([M,z],[theta_0])
     beta_0 = 1.1
     con_test = con(M,z)
     theta2 = np.array([beta_0 ,con_test*1.01])
@@ -288,12 +300,12 @@ def find_params_M(M,z,theta_0):
     return ans
 
 
-def make_a_obs_profile(thta_arc,M,z,theta_0):
+def make_a_obs_profile(thta_arc,M,z,theta_0,nu):
     thta2 = find_params_M(M,z,theta_0)
     rho = np.zeros(len(thta_arc))
     pth = np.zeros(len(thta_arc))
     for ii in range(len(thta_arc)):
-        temp = project_prof_beam(thta_arc[ii],M,z,theta_0,thta2)
+        temp = project_prof_beam(thta_arc[ii],M,z,theta_0,thta2, nu)
         rho[ii] = temp[0]
         pth[ii] = temp[1]
     return rho,pth
@@ -305,9 +317,9 @@ def make_a_obs_profile_sim_rho(thta_arc,M,z,theta_rho):
         rho[ii] = temp
     return rho
 
-def make_a_obs_profile_sim_pth(thta_arc,M,z,theta_pth):
+def make_a_obs_profile_sim_pth(thta_arc,M,z,theta_pth,nu):
     pth = np.zeros(len(thta_arc))
     for ii in range(len(thta_arc)):
-        temp = project_prof_beam_sim_rho(thta_arc[ii],M,z,theta_pth)
+        temp = project_prof_beam_sim_pth(thta_arc[ii],M,z,theta_pth,nu)
         pth[ii] = temp
     return pth
