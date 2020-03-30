@@ -231,14 +231,14 @@ def project_prof_beam_sim_pth(tht,M,z,theta_pth, nu):
 
     AngDis = AngDist(z)
 
-    rvir = r200(M,z)/kpc_cgs/1e3 #Mpc
-    c = con(M,z)
+    m_med = np.median(M)
+    #rvir = r200(m_med,z)/kpc_cgs/1e3 #Mpc
 
     r_ext = AngDis*np.arctan(np.radians(tht/60.))
     r_ext2 = AngDis*np.arctan(np.radians(tht*disc_fac/60.))
 
-    rvir_arcmin = 180.*60./np.pi * np.tan(rvir/AngDis) #arcmin
-    rvir_ext = AngDis*np.arctan(np.radians(2*rvir_arcmin/60.))
+    #rvir_arcmin = 180.*60./np.pi * np.tan(rvir/AngDis) #arcmin
+    #rvir_ext = AngDis*np.arctan(np.radians(2*rvir_arcmin/60.))
 
     rad = np.logspace(-3, 1, 1e3) #Mpc
     rad2 = np.logspace(-3, 1, 1e3)
@@ -261,8 +261,8 @@ def project_prof_beam_sim_pth(tht,M,z,theta_pth, nu):
     rint  = np.sqrt(rad**2 + thta_smooth**2 *AngDis**2)
     rint2  = np.sqrt(rad2**2 + thta2_smooth**2 *AngDis**2)
 
-    Pth2D = 2*np.trapz(Pth_gnfw1h(rint/rvir,M,z,theta_sim_pth), x=rad * kpc_cgs, axis=1) * 1e3
-    Pth2D2 = 2*np.trapz(Pth_gnfw1h(rint2/rvir,M,z,theta_sim_pth), x=rad2 * kpc_cgs, axis=1) * 1e3
+    Pth2D = 2*np.trapz(Pth_gnfw1h(rint,M,z,theta_sim_pth), x=rad * kpc_cgs, axis=1) * 1e3
+    Pth2D2 = 2*np.trapz(Pth_gnfw1h(rint2,M,z,theta_sim_pth), x=rad2 * kpc_cgs, axis=1) * 1e3
 
     thta_smooth = (np.arange(NNR2) + 1.)*dtht
     thta = thta[:,None]
