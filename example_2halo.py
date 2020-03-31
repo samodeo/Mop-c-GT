@@ -20,7 +20,7 @@ print('**Computing 3D profiles of density and preassure in cgs units**')
 print()
 print('starting with density')
 
-x = np.logspace(np.log10(0.1),np.log10(10),50) #Mpc
+x = np.logspace(np.log10(0.1),np.log10(10),50)
 
 rho1h = two.rho_gnfw(x,m,z)  #g/cm3
 
