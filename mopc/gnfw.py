@@ -35,17 +35,25 @@ def rho_gnfw1h(xx, M, z, theta):
     ans *= rho_cz(z) * fb
     return ans
 
-def rho_gnfw2h(xx, a2):
-    rho = np.genfromtxt('data/rhoGNFW_M2e+13_z0.57.txt')
-    rat = rho[:,0]
-    rho2h = rho[:,2]
-    ans = a2 * np.interp(xx,rat,rho2h)
-    return ans
+def rho_gnfw2h(xx,z,theta2h):
+    zbin = [0.45, 0.48, 0.52, 0.56, 0.6, 0.64, 0.68]
+    x1 = np.logspace(np.log10(0.1),np.log10(10),50)
+    rho2h = []
+    for ix in range(0,len(x1)):
+        rho2h_z = []
+        for iz in zbin:
+            rho = np.genfromtxt('/Users/samodeo/Desktop/2halo/zbin/data/rhoGNFW_M2e+13_z'+str(iz)+'.txt')        
+            rho2h_z.append(rho[ix,2])
+        rho2h_z = np.array(rho2h_z)
+        rho2h.append(np.interp(z,zbin,rho2h_z))
+    rho2h = np.array(rho2h)
+    ans = np.interp(x2,x1,rho2h)
+    return theta2h * ans
 
-def rho_gnfw(xx, theta):
+def rho_gnfw(xx,M,z,theta):
     theta1h = theta[0], theta[1], theta[2]
     theta2h = theta[3]
-    ans = rho_gnfw1h(xx,M,z,theta1h) + rho_gnfw2h(xx, theta2h)
+    ans = rho_gnfw1h(xx,M,z,theta1h) + rho_gnfw2h(xx,z,theta2h)
     return ans
 
 
@@ -92,13 +100,23 @@ def Pth_gnfw1h(x,M,z,theta):
         pth_av = np.average(pth, weights=p, axis=0)
         return pth_av
 
-def Pth_gnfw2h(xx):
-    pth = np.genfromtxt('data/PthGNFW_M2e+13_z0.57.txt')
-    rat = pth[:,0]
-    pth2h = pth[:,2]
-    ans = np.interp(xx,rat,pth2h)
-    return ans
+def Pth_gnfw2h(xx,z,theta2h):
+    zbin = [0.45, 0.48, 0.52, 0.56, 0.6, 0.64, 0.68]
+    x1 = np.logspace(np.log10(0.1),np.log10(10),50)
+    pth2h = []
+    for ix in range(0,len(x1)):
+        pth2h_z = []
+        for iz in zbin:
+            pth = np.genfromtxt('/Users/samodeo/Desktop/2halo/zbin/data/PthGNFW_M2e+13_z'+str(iz)+'.txt')        
+            pth2h_z.append(pth[ix,2])
+        pth2h_z = np.array(pth2h_z)
+        pth2h.append(np.interp(z,zbin,pth2h_z))
+    pth2h = np.array(pth2h)
+    ans = np.interp(x2,x1,pth2h)
+    return theta2h * ans
 
-def Pth_gnfw(xx, theta):
-    ans = Pth_gnfw1h(xx,M,z,theta) + Pth_gnfw2h(xx)
+def Pth_gnfw(xx,M,z,theta):
+    theta1h = theta[0], theta[1], theta[2]
+    theta2h = theta[3]
+    ans = Pth_gnfw1h(xx,M,z,theta1h) + Pth_gnfw2h(xx,z, theta2h)
     return ans
