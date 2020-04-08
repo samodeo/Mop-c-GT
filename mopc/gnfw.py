@@ -47,7 +47,7 @@ def rho_gnfw2h(xx,z,theta2h):
         rho2h_z = np.array(rho2h_z)
         rho2h.append(np.interp(z,zbin,rho2h_z))
     rho2h = np.array(rho2h)
-    ans = np.interp(x2,x1,rho2h)
+    ans = np.interp(xx,x1,rho2h)
     return theta2h * ans
 
 def rho_gnfw(xx,M,z,theta):
@@ -112,7 +112,7 @@ def Pth_gnfw2h(xx,z,theta2h):
         pth2h_z = np.array(pth2h_z)
         pth2h.append(np.interp(z,zbin,pth2h_z))
     pth2h = np.array(pth2h)
-    ans = np.interp(x2,x1,pth2h)
+    ans = np.interp(xx,x1,pth2h)
     return theta2h * ans
 
 def Pth_gnfw(xx,M,z,theta):
