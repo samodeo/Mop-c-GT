@@ -2,7 +2,7 @@ import numpy as np
 from scipy import special
 from .params import cosmo_params
 from .cosmo import AngDist
-from .gnfw import r200, rho_gnfw1h, Pth_gnfw1h
+from .gnfw import r200, rho_gnfw1h, Pth_gnfw1h, rho_gnfw, Pth_gnfw
 from .obb import con, fstar_func, return_prof_pars, rho, Pth
 
 
@@ -138,7 +138,7 @@ def project_prof_beam(tht,M,z,theta,theta2, nu):
     return sig_all_beam, sig_all_p_beam
 
 
-def project_prof_beam_sim_rho(tht,M,z,theta_rho):
+def project_prof_beam_sim_rho(tht,M,z,theta_rho,beam, rho2h):
     theta_sim_rho = theta_rho
 
     disc_fac = np.sqrt(2)
@@ -146,7 +146,7 @@ def project_prof_beam_sim_rho(tht,M,z,theta_rho):
     NNR = 100
     NNR2 = 2.*NNR
 
-    fwhm = 1.4
+    fwhm = beam
     fwhm *= np.pi / (180.*60.)
     sigmaBeam = fwhm / np.sqrt(8.*np.log(2.))
 
@@ -155,14 +155,14 @@ def project_prof_beam_sim_rho(tht,M,z,theta_rho):
 
     AngDis = AngDist(z)
 
-    rvir = r200(M,z)/kpc_cgs/1e3 #Mpc
-    c = con(M,z)
+    #rvir = r200(M,z)/kpc_cgs/1e3 #Mpc
+    #c = con(M,z)
 
     r_ext = AngDis*np.arctan(np.radians(tht/60.))
     r_ext2 = AngDis*np.arctan(np.radians(tht*disc_fac/60.))
 
-    rvir_arcmin = 180.*60./np.pi * np.tan(rvir/AngDis) #arcmin
-    rvir_ext = AngDis*np.arctan(np.radians(2*rvir_arcmin/60.))
+    #rvir_arcmin = 180.*60./np.pi * np.tan(rvir/AngDis) #arcmin
+    #rvir_ext = AngDis*np.arctan(np.radians(2*rvir_arcmin/60.))
 
     rad = np.logspace(-3, 1, 1e3) #Mpc
     rad2 = np.logspace(-3, 1, 1e3)
@@ -185,8 +185,8 @@ def project_prof_beam_sim_rho(tht,M,z,theta_rho):
     rint  = np.sqrt(rad**2 + thta_smooth**2 *AngDis**2)
     rint2  = np.sqrt(rad2**2 + thta2_smooth**2 *AngDis**2)
 
-    rho2D = 2*np.trapz(rho_gnfw1h(rint/rvir,M,z,theta_sim_rho), x=rad * kpc_cgs, axis=1) * 1e3
-    rho2D2 = 2*np.trapz(rho_gnfw1h(rint2/rvir,M,z,theta_sim_rho), x=rad2 * kpc_cgs, axis=1) * 1e3
+    rho2D = 2*np.trapz(rho_gnfw(rint,M,z,theta_sim_rho, rho2h), x=rad * kpc_cgs, axis=1) * 1e3
+    rho2D2 = 2*np.trapz(rho_gnfw(rint2,M,z,theta_sim_rho, rho2h), x=rad2 * kpc_cgs, axis=1) * 1e3
 
     thta_smooth = (np.arange(NNR2) + 1.)*dtht
     thta = thta[:,None]
@@ -214,7 +214,7 @@ def project_prof_beam_sim_rho(tht,M,z,theta_rho):
 
     return sig_all_beam
 
-def project_prof_beam_sim_pth(tht,M,z,theta_pth, nu):
+def project_prof_beam_sim_pth(tht,M,z,theta_pth, nu,beam):
     theta_sim_pth = theta_pth
 
     disc_fac = np.sqrt(2)
@@ -222,7 +222,7 @@ def project_prof_beam_sim_pth(tht,M,z,theta_pth, nu):
     NNR = 100
     NNR2 = 2.*NNR
 
-    fwhm = 1.4
+    fwhm = beam
     fwhm *= np.pi / (180.*60.)
     sigmaBeam = fwhm / np.sqrt(8.*np.log(2.))
 
@@ -310,16 +310,16 @@ def make_a_obs_profile(thta_arc,M,z,theta_0,nu):
         pth[ii] = temp[1]
     return rho,pth
 
-def make_a_obs_profile_sim_rho(thta_arc,M,z,theta_rho):
+def make_a_obs_profile_sim_rho(thta_arc,M,z,theta_rho,beam, rho2h):
     rho = np.zeros(len(thta_arc))
     for ii in range(len(thta_arc)):
-        temp = project_prof_beam_sim_rho(thta_arc[ii],M,z,theta_rho)
+        temp = project_prof_beam_sim_rho(thta_arc[ii],M,z,theta_rho,beam, rho2h)
         rho[ii] = temp
     return rho
 
-def make_a_obs_profile_sim_pth(thta_arc,M,z,theta_pth,nu):
+def make_a_obs_profile_sim_pth(thta_arc,M,z,theta_pth,nu,beam):
     pth = np.zeros(len(thta_arc))
     for ii in range(len(thta_arc)):
-        temp = project_prof_beam_sim_pth(thta_arc[ii],M,z,theta_pth,nu)
+        temp = project_prof_beam_sim_pth(thta_arc[ii],M,z,theta_pth,nu,beam)
         pth[ii] = temp
     return pth
