@@ -154,7 +154,7 @@ def Pth_gnfw2h(xx,z,theta2h):
             m = 2e13
             rvir=r200(m,iz)/kpc_cgs/1e3 #Mpc
             x_use.append(xx/rvir)
-            pth = np.genfromtxt('data/zbin/PthGNFW_M2e+13_z'+str(iz)+'.txt')        
+            pth = np.genfromtxt('data/PthGNFW_M2e+13_z'+str(iz)+'.txt')        
             pth2h_z.append(pth[ix,2])
         pth2h_z = np.array(pth2h_z)
         pth2h.append(np.interp(z,zbin,pth2h_z))
