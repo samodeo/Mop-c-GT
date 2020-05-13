@@ -28,7 +28,7 @@ rho_grid = read_rho2h()
 
 def rho_grid_rbf():
     zbin = np.array([0.45, 0.48, 0.52, 0.56, 0.6, 0.64, 0.68])
-    x1 = np.logspace(np.log10(0.005),np.log10(5),50) #Mpc
+    x1 = np.logspace(np.log10(0.1),np.log10(10),50)
     zarr = rho_grid * 0.0 + zbin[None,:]
     xarr = rho_grid * 0.0 + x1[:,None]
     rbf = Rbf(xarr, zarr, rho_grid, function='linear') 
