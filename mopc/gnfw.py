@@ -188,7 +188,7 @@ def Pth_gnfw2h_onez(xx,z,theta2h):
     z = 0.57
     pth_file = np.genfromtxt('data/PthGNFW_M2e+13_z0.57.txt')
     x1 = pth_file[:,0]
-    pth2h = pth_file[:,2]   
+    pth2h = pth_file[:,3]   
     ans = np.interp(xx,x1,pth2h)
     return theta2h * ans
 
