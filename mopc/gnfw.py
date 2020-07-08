@@ -84,7 +84,6 @@ def Pth_gnfw1h(x,M,z,theta):
     '''generalized NFW profile describing the thermal pressure [cgs units],
     parameters have mass and redshift dependence, as in Battaglia et al. (2012)
     '''
-    
     '''
     if isinstance(M, float) is True:
         r200c = r200(M,z)
@@ -102,16 +101,16 @@ def Pth_gnfw1h(x,M,z,theta):
         ans = P0 * (x/xc)**gm * (1+(x/xc)**al)**(-bt)
         ans *= P200c
         return ans
-    else:
-    '''    
+    else: 
+    '''   
     #logm = np.log10(M)
     #h,b_edges = np.histogram(logm, bins=9)
     #b_cen = np.array([(b_edges[i]+b_edges[i-1])*0.5 for i in range(1,len(b_edges))])
     #b_len = np.array([(b_edges[i]-b_edges[i-1]) for i in range(1,len(b_edges))])
     #integ = np.sum(10**b_len*h)
     #p = h/integ
-    b_cen = np.array([[12.27689266, 12.67884686, 13.16053855, 13.69871423]]).T
-    p = np.array([4.13431979e-03, 1.31666601e-01, 3.36540698e-01, 8.13760167e-02])
+    b_cen = np.array([[11.31932504, 11.43785913, 11.57526319, 11.74539764, 11.97016907, 12.27689266, 12.67884686, 13.16053855, 13.69871423]]).T
+    p = np.array([2.94467222e-06, 2.94467222e-06, 2.94467222e-06, 1.47233611e-05, 3.38637305e-05, 4.13431979e-03, 1.31666601e-01, 3.36540698e-01, 8.13760167e-02])
     pth = []
     for i in range(0, len(b_cen)):
         m = 10**b_cen[i]
@@ -120,9 +119,9 @@ def Pth_gnfw1h(x,M,z,theta):
         M_cgs = m*Msol_cgs
         P200c = G_cgs * M_cgs* 200. * rho_cz(z) * fb /(2.*r200c)
         P0, al, bt = theta
+        #al = 1.0
         xc = 0.497 * (m/1e14)**(-0.00865) * (1+z)**0.731
         gm = -0.3
-        #xx = x/rvir
         pth.append(P0 * (x/rvir/xc)**gm * (1+(x/rvir/xc)**al)**(-bt) * P200c)   
     pth = np.array(pth)
     pth_av = np.average(pth, weights=p, axis=0)
