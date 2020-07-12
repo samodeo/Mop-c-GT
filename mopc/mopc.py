@@ -4,7 +4,7 @@ from scipy.signal import convolve
 from .params import cosmo_params
 from .cosmo import AngDist
 from .gnfw import r200, rho_gnfw1h, Pth_gnfw1h, rho_gnfw, Pth_gnfw
-from .obb import con, fstar_func, return_prof_pars, rho, Pth, rho1h_one_mass, Pth1h_one_mass
+from .obb import con, fstar_func, return_prof_pars, rho, Pth #, rho1h_one_mass, Pth1h_one_mass
 #from .batt import rho_batt_mw, Pth_batt_mw
 import matplotlib.pyplot as plt
 import time
@@ -441,3 +441,18 @@ def make_a_obs_profile_sim_y(thta_arc,M,z,theta_pth,beam):
         temp = project_prof_beam_sim_y(thta_arc[ii],M,z,theta_pth,beam)
         pth[ii] = temp
     return pth
+
+
+def project_prof_sim_rho(rs,M,z,theta_rho):
+    theta_sim_rho = theta_rho
+
+    #rs in MPC 
+    NNR = 100
+    rad = np.logspace(-3, 1, 2e2) #Mpc                                                                                 
+
+    rint  = np.sqrt(rad[None,:]**2 + rs[:,None]**2)
+
+    rhoint = rho_gnfw(rint,M,z,theta_sim_rho)
+    rho2D = 2*np.trapz(rhoint, x=rad * kpc_cgs, axis=1) * 1e3
+
+    return rho2D #Not normalized
