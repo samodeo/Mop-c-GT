@@ -5,6 +5,8 @@ from .params import cosmo_params
 from .cosmo import AngDist
 from .gnfw import r200, rho_gnfw1h, Pth_gnfw1h, rho_gnfw, Pth_gnfw
 from .obb import con, fstar_func, return_prof_pars, rho, Pth, rho1h_one_mass, Pth1h_one_mass, rho_dm
+from .obb import con, fstar_func, return_prof_pars, rho, Pth #, rho1h_one_mass, Pth1h_one_mass
+import matplotlib.pyplot as plt
 import time
 
 
@@ -651,6 +653,7 @@ def project_prof_sim_rho(rs,M,z,theta_rho):
 
     #rs in MPC 
     NNR = 100
+    rad = np.logspace(-3, 1, 200) #Mpc                                                                                 
     rad = np.logspace(-3, 1, 200) #Mpc                                                                                 
 
     rint  = np.sqrt(rad[None,:]**2 + rs[:,None]**2)
