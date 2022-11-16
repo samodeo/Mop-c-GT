@@ -23,4 +23,8 @@ Extra packages needed for the two-halo computation:
 - hmf by Murray, Power and Robotham (2013) : https://github.com/steven-murray/hmf 
 - colossus by Diemer 2018: https://bdiemer.bitbucket.io/colossus/installation.html
 
-Presented in Amodeo et al. arXiv:2009.05558
+Presented in Amodeo et al. 2021 Physical Review D, 103, 063514
+
+DOI: 10.1103/PhysRevD.103.063514 
+
+arXiv: arXiv:2009.05558 
