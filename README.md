@@ -25,6 +25,6 @@ Extra packages needed for the two-halo computation:
 
 Presented in Amodeo et al. 2021 Phys. Rev. D, 103, 063514
 
-DOI: [10.1103/PhysRevD.103.063514]
+DOI: 10.1103/PhysRevD.103.063514
 
 [arXiv:2009.05558 ](https://arxiv.org/abs/2009.05558)
